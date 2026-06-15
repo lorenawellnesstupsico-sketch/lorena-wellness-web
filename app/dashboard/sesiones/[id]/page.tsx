@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PrivateNav } from "@/components/dashboard/private-nav";
 import { DeleteSessionButton } from "@/components/dashboard/delete-session-button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { actualizarSesion, eliminarSesion } from "../actions";
 
 type PageProps = {
@@ -171,12 +172,11 @@ export default async function EditarSesionPage({
             </div>
 
             <div className="md:col-span-2 flex flex-wrap gap-3">
-              <button
-                type="submit"
-                className="rounded-full bg-[#C97B57] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#B96E4C]"
-              >
-                Guardar cambios
-              </button>
+              <SubmitButton
+                idleText="Guardar cambios"
+                loadingText="Guardando..."
+                className="rounded-full bg-[#C97B57] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#B96E4C] disabled:cursor-not-allowed disabled:opacity-70"
+              />
 
               <a
                 href="/dashboard/sesiones"
@@ -204,7 +204,7 @@ export default async function EditarSesionPage({
 
           <form action={eliminarSesion} className="mt-6">
             <input type="hidden" name="id" value={sesion.id} />
-            <DeleteSessionButton />
+            <DeleteSessionButton label="Eliminar sesión" />
           </form>
         </div>
       </section>

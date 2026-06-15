@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PrivateNav } from "@/components/dashboard/private-nav";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { guardarProceso } from "./actions";
 
 type Proceso = {
@@ -177,12 +178,11 @@ export default async function ProcesoPage({
             </div>
 
             <div className="md:col-span-2">
-              <button
-                type="submit"
-                className="rounded-full bg-[#C97B57] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#B96E4C]"
-              >
-                Guardar cambios
-              </button>
+              <SubmitButton
+                idleText="Guardar cambios"
+                loadingText="Guardando..."
+                className="rounded-full bg-[#C97B57] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#B96E4C] disabled:cursor-not-allowed disabled:opacity-70"
+              />
             </div>
           </form>
         </div>

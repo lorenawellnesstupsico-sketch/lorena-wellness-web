@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PrivateNav } from "@/components/dashboard/private-nav";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { crearSesion } from "./actions";
 
 type Sesion = {
@@ -187,12 +188,11 @@ export default async function SesionesPage({
             </div>
 
             <div className="md:col-span-2">
-              <button
-                type="submit"
-                className="rounded-full bg-[#C97B57] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#B96E4C]"
-              >
-                Guardar sesión
-              </button>
+              <SubmitButton
+                idleText="Guardar sesión"
+                loadingText="Guardando..."
+                className="rounded-full bg-[#C97B57] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#B96E4C] disabled:cursor-not-allowed disabled:opacity-70"
+              />
             </div>
           </form>
         </div>
