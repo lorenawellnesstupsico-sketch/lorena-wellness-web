@@ -1,30 +1,51 @@
+import Link from "next/link";
+
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#DED2C5] bg-[#FAF6F1]/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 md:px-10">
-        <a
-          href="/"
-          className="text-sm font-semibold uppercase tracking-[0.22em] text-[#8C5A3C]"
-        >
-          Lorena Wellness TuPsico
-        </a>
+    <header className="sticky top-0 z-50 border-b border-[#E8DCCF] bg-[#FAF6F1]/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 md:px-10">
+        <Link href="/" className="min-w-0">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#8C5A3C]">
+              Lorena Wellness TuPsico
+            </p>
+            <p className="mt-1 text-xs text-[#6E5648]">
+              Psicología clínica y acompañamiento online
+            </p>
+          </div>
+        </Link>
 
-        <nav className="hidden gap-8 text-sm text-[#6E5648] md:flex">
-          <a href="/" className="transition hover:text-[#C97B57]">
-            Inicio
-          </a>
-          <a href="/servicios" className="transition hover:text-[#C97B57]">
+        <nav className="hidden items-center gap-6 md:flex">
+          <a
+            href="#servicios"
+            className="text-sm text-[#4E3427] transition hover:text-[#8C5A3C]"
+          >
             Servicios
           </a>
-          <a href="/sobre-mi" className="transition hover:text-[#C97B57]">
-            Sobre mí
+          <a
+            href="#acompanamiento"
+            className="text-sm text-[#4E3427] transition hover:text-[#8C5A3C]"
+          >
+            Proceso
           </a>
-          <a href="/contacto" className="transition hover:text-[#C97B57]">
+          <a
+            href="#testimonios"
+            className="text-sm text-[#4E3427] transition hover:text-[#8C5A3C]"
+          >
+            Enfoque
+          </a>
+          <a
+            href="#contacto"
+            className="text-sm text-[#4E3427] transition hover:text-[#8C5A3C]"
+          >
             Contacto
           </a>
-          <a href="/login" className="transition hover:text-[#C97B57]">
+          <Link
+            href="/login"
+            className="rounded-full border border-[#DED2C5] bg-white px-4 py-2 text-sm font-medium text-[#4E3427] transition hover:bg-[#F6EFE8]"
+          >
             Ingresar
-          </a>
+          </Link>
         </nav>
       </div>
     </header>

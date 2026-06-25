@@ -56,9 +56,9 @@ export default async function DashboardPage() {
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6E5648]">
-            Este espacio reúne tu proceso, tus sesiones, tus recursos y la
-            información principal de tu cuenta. La idea es que aquí puedas ver
-            todo con más orden, claridad y acompañamiento.
+            Este espacio reúne lo más importante de tu proceso para que puedas
+            volver a ti con más claridad, orden y presencia cada vez que lo
+            necesites.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
               Seguimiento personal
             </h2>
             <p className="mt-4 leading-8 text-[#6E5648]">
-              Observa el enfoque actual de tu proceso, lo que estás trabajando y
+              Revisa el enfoque actual de tu proceso, lo que estás trabajando y
               el siguiente paso que quieres sostener.
             </p>
 
@@ -107,11 +107,11 @@ export default async function DashboardPage() {
               Recursos
             </p>
             <h2 className="mt-4 text-2xl font-semibold">
-              Materiales y apoyo
+              Materiales de apoyo
             </h2>
             <p className="mt-4 leading-8 text-[#6E5648]">
-              Accede a guías, ejercicios y recursos pensados para acompañarte
-              entre sesiones.
+              Accede a guías, ejercicios y herramientas pensadas para
+              acompañarte con más claridad entre sesiones.
             </p>
 
             <div className="mt-6 inline-flex rounded-full bg-[#F3E7DA] px-4 py-2 text-sm font-medium text-[#8C5A3C] transition group-hover:bg-[#EAD9C8]">
@@ -127,11 +127,11 @@ export default async function DashboardPage() {
               Sesiones
             </p>
             <h2 className="mt-4 text-2xl font-semibold">
-              Organización y control
+              Organización y seguimiento
             </h2>
             <p className="mt-4 leading-8 text-[#6E5648]">
-              Revisa tu próxima sesión, tu historial y mantén más orden dentro
-              del acompañamiento.
+              Consulta tu próxima sesión, revisa tu historial y mantén más orden
+              dentro de tu acompañamiento.
             </p>
 
             <div className="mt-6 inline-flex rounded-full bg-[#F3E7DA] px-4 py-2 text-sm font-medium text-[#8C5A3C] transition group-hover:bg-[#EAD9C8]">
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
             </h2>
             <p className="mt-4 leading-8 text-[#6E5648]">
               Visualiza tu información principal y mantén una base clara de tu
-              espacio personal.
+              espacio personal dentro de la plataforma.
             </p>
 
             <div className="mt-6 inline-flex rounded-full bg-[#C97B57] px-4 py-2 text-sm font-medium text-white transition group-hover:bg-[#B96E4C]">
@@ -167,30 +167,37 @@ export default async function DashboardPage() {
             </p>
 
             <h2 className="mt-4 text-2xl font-semibold">
-              Una plataforma hecha para acompañar mejor tu proceso
+              Una plataforma pensada para acompañarte mejor
             </h2>
 
             <p className="mt-4 max-w-2xl leading-8 text-[#6E5648]">
-              Aquí no solo organizas información. La intención es que puedas
-              volver a este espacio para ubicarte, reconocer tu recorrido y
-              sostener con más claridad lo que hoy necesitas.
+              La intención de este espacio no es solo organizar información,
+              sino ayudarte a volver a tu proceso con más consciencia, sostén y
+              continuidad.
             </p>
           </div>
 
           <div className="rounded-[2rem] border border-[#E7D8C8] bg-[#F3E7DA] p-8 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8C5A3C]">
-              Sesión activa
+              Cuenta activa
             </p>
 
             <div className="mt-5 space-y-4 text-sm leading-7 text-[#6E5648]">
+              <p>
+                <span className="font-semibold text-[#4E3427]">Nombre:</span>{" "}
+                {displayName}
+              </p>
+
               <p>
                 <span className="font-semibold text-[#4E3427]">Correo:</span>{" "}
                 {user.email}
               </p>
 
               <p>
-                <span className="font-semibold text-[#4E3427]">Usuario ID:</span>{" "}
-                {user.id}
+                <span className="font-semibold text-[#4E3427]">
+                  Estado de acceso:
+                </span>{" "}
+                Activo
               </p>
             </div>
           </div>

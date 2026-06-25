@@ -53,9 +53,9 @@ export default async function PerfilPage() {
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6E5648]">
-            Este espacio reúne la información principal de tu cuenta y servirá
-            como base para futuras personalizaciones de tu experiencia dentro de
-            la plataforma.
+            Este espacio reúne la información principal de tu cuenta y sirve
+            como base para una experiencia más clara, organizada y personalizada
+            dentro de la plataforma.
           </p>
         </div>
 
@@ -82,9 +82,9 @@ export default async function PerfilPage() {
 
               <div className="rounded-[1.5rem] border border-[#EFE3D8] bg-[#FAF6F1] p-5">
                 <p className="text-sm font-semibold text-[#4E3427]">
-                  Identificador de usuario
+                  Estado de la cuenta
                 </p>
-                <p className="mt-2 break-all text-sm">{user.id}</p>
+                <p className="mt-2 text-lg">Acceso activo</p>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default async function PerfilPage() {
             </p>
 
             <h2 className="mt-4 text-2xl font-semibold">
-              Un perfil claro y ordenado
+              Un perfil claro, simple y ordenado
             </h2>
 
             <p className="mt-4 leading-8 text-[#6E5648]">
