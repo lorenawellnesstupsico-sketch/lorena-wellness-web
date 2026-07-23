@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -99,7 +100,17 @@ function formatDate(value: string | null) {
     return "Por definir";
   }
 
-  const date = new Date(value);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return "Por definir";
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const date = new Date(Date.UTC(year, month - 1, day));
 
   if (Number.isNaN(date.getTime())) {
     return "Por definir";
@@ -107,6 +118,7 @@ function formatDate(value: string | null) {
 
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "long",
+    timeZone: "UTC",
   }).format(date);
 }
 
@@ -171,7 +183,11 @@ function DashboardShell({
   );
 }
 
-function InactiveAccount({ profile }: { profile: ProfileRow }) {
+function InactiveAccount({
+  profile,
+}: {
+  profile: ProfileRow;
+}) {
   return (
     <DashboardShell profile={profile}>
       <section className="mx-auto max-w-4xl px-6 py-16 md:px-10">
@@ -185,8 +201,8 @@ function InactiveAccount({ profile }: { profile: ProfileRow }) {
           </h1>
 
           <p className="mt-5 leading-8 text-[#6E5648]">
-            El acceso a la plataforma debe ser revisado por el equipo
-            administrativo de Lorena Wellness TuPsico.
+            El acceso a la plataforma debe ser revisado por el
+            equipo administrativo de Lorena Wellness TuPsico.
           </p>
         </div>
       </section>
@@ -194,31 +210,43 @@ function InactiveAccount({ profile }: { profile: ProfileRow }) {
   );
 }
 
-function AdministratorDashboard({ profile }: { profile: ProfileRow }) {
+function AdministratorDashboard({
+  profile,
+}: {
+  profile: ProfileRow;
+}) {
   const modules = [
     {
       title: "Pacientes",
       description:
         "Crear perfiles, asignar psicólogos, administrar planes y controlar accesos.",
-      status: "Base de datos preparada",
+      status: "Módulo disponible",
+      href: "/dashboard/pacientes",
+      actionLabel: "Gestionar pacientes",
     },
     {
       title: "Psicólogos",
       description:
         "Incorporar profesionales, activar cuentas y organizar sus pacientes asignados.",
       status: "Próximo módulo",
+      href: null,
+      actionLabel: null,
     },
     {
       title: "Pagos y planes",
       description:
         "Registrar pagos, consultar estados y administrar los planes de servicio.",
       status: "Base de datos preparada",
+      href: null,
+      actionLabel: null,
     },
     {
       title: "Sesiones y Meet",
       description:
         "Organizar sesiones y posteriormente conectarlas con Google Calendar y Meet.",
       status: "Integración posterior",
+      href: null,
+      actionLabel: null,
     },
   ];
 
@@ -235,8 +263,8 @@ function AdministratorDashboard({ profile }: { profile: ProfileRow }) {
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6E5648]">
-            Desde este espacio se organizarán los pacientes, psicólogos,
-            planes, pagos y sesiones de TuPsico.
+            Desde este espacio se organizarán los pacientes,
+            psicólogos, planes, pagos y sesiones de TuPsico.
           </p>
 
           <div className="mt-8 inline-flex rounded-full bg-[#76516E] px-5 py-3 text-sm font-semibold text-white">
@@ -245,28 +273,60 @@ function AdministratorDashboard({ profile }: { profile: ProfileRow }) {
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {modules.map((module) => (
-            <article
-              key={module.title}
-              className="rounded-[2rem] border border-[#E7D8C8] bg-[#FFFDFC] p-7 shadow-sm"
-            >
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8C5A3C]">
-                {module.status}
-              </p>
+          {modules.map((module) => {
+            const content = (
+              <>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8C5A3C]">
+                  {module.status}
+                </p>
 
-              <h2 className="mt-4 text-2xl font-semibold">
-                {module.title}
-              </h2>
+                <h2 className="mt-4 text-2xl font-semibold">
+                  {module.title}
+                </h2>
 
-              <p className="mt-4 leading-8 text-[#6E5648]">
-                {module.description}
-              </p>
-            </article>
-          ))}
+                <p className="mt-4 leading-8 text-[#6E5648]">
+                  {module.description}
+                </p>
+
+                {module.href && module.actionLabel ? (
+                  <span className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#76516E] px-5 py-2.5 text-sm font-semibold text-white transition group-hover:bg-[#66445F]">
+                    {module.actionLabel}
+                  </span>
+                ) : (
+                  <span className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-[#DED2C5] bg-[#FAF6F1] px-5 py-2.5 text-sm font-semibold text-[#80695B]">
+                    En construcción
+                  </span>
+                )}
+              </>
+            );
+
+            if (module.href) {
+              return (
+                <Link
+                  key={module.title}
+                  href={module.href}
+                  className="group rounded-[2rem] border border-[#D7C1D2] bg-[#FFFDFC] p-7 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[#76516E] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#76516E] focus:ring-offset-2"
+                >
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <article
+                key={module.title}
+                className="rounded-[2rem] border border-[#E7D8C8] bg-[#FFFDFC] p-7 shadow-sm"
+              >
+                {content}
+              </article>
+            );
+          })}
         </div>
 
         <div className="mt-10 rounded-[2rem] border border-[#E7D8C8] bg-[#F3E7DA] p-8">
-          <p className="font-semibold">Cuenta administradora</p>
+          <p className="font-semibold">
+            Cuenta administradora
+          </p>
 
           <p className="mt-3 text-sm leading-7 text-[#6E5648]">
             {profile.email}
@@ -281,7 +341,11 @@ function AdministratorDashboard({ profile }: { profile: ProfileRow }) {
   );
 }
 
-function PsychologistDashboard({ profile }: { profile: ProfileRow }) {
+function PsychologistDashboard({
+  profile,
+}: {
+  profile: ProfileRow;
+}) {
   return (
     <DashboardShell profile={profile}>
       <section className="mx-auto max-w-7xl px-6 py-12 md:px-10">
@@ -295,8 +359,9 @@ function PsychologistDashboard({ profile }: { profile: ProfileRow }) {
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6E5648]">
-            Aquí podrás consultar tus pacientes asignados, actualizar sus
-            procesos, organizar sesiones y asignar recursos terapéuticos.
+            Aquí podrás consultar tus pacientes asignados,
+            actualizar sus procesos, organizar sesiones y
+            asignar recursos terapéuticos.
           </p>
 
           <div className="mt-8 inline-flex rounded-full bg-[#76516E] px-5 py-3 text-sm font-semibold text-white">
@@ -314,11 +379,13 @@ function PsychologistDashboard({ profile }: { profile: ProfileRow }) {
               key={title}
               className="rounded-[2rem] border border-[#E7D8C8] bg-[#FFFDFC] p-7 shadow-sm"
             >
-              <h2 className="text-xl font-semibold">{title}</h2>
+              <h2 className="text-xl font-semibold">
+                {title}
+              </h2>
 
               <p className="mt-4 leading-8 text-[#6E5648]">
-                Este módulo se habilitará en la siguiente etapa de
-                construcción.
+                Este módulo se habilitará en la siguiente etapa
+                de construcción.
               </p>
             </article>
           ))}
@@ -328,7 +395,11 @@ function PsychologistDashboard({ profile }: { profile: ProfileRow }) {
   );
 }
 
-function PatientPendingDashboard({ profile }: { profile: ProfileRow }) {
+function PatientPendingDashboard({
+  profile,
+}: {
+  profile: ProfileRow;
+}) {
   return (
     <DashboardShell profile={profile}>
       <section className="mx-auto max-w-4xl px-6 py-16 md:px-10">
@@ -342,8 +413,9 @@ function PatientPendingDashboard({ profile }: { profile: ProfileRow }) {
           </h1>
 
           <p className="mt-5 leading-8 text-[#6E5648]">
-            El equipo administrativo debe asignarte un psicólogo, un plan y
-            activar tu ficha de paciente antes de mostrar tu proceso.
+            El equipo administrativo debe asignarte un
+            psicólogo, un plan y activar tu ficha de paciente
+            antes de mostrar tu proceso.
           </p>
         </div>
       </section>
@@ -377,7 +449,10 @@ async function PatientDashboard({
     resourcesResult.error;
 
   if (firstError) {
-    console.error("Error loading patient dashboard:", firstError);
+    console.error(
+      "Error loading patient dashboard:",
+      firstError,
+    );
 
     return (
       <DashboardShell profile={profile}>
@@ -392,9 +467,9 @@ async function PatientDashboard({
             </h1>
 
             <p className="mt-5 leading-8 text-[#6E5648]">
-              Cierra sesión e inténtalo nuevamente. Si el problema continúa,
-              el equipo administrativo debe revisar la configuración de tu
-              perfil.
+              Cierra sesión e inténtalo nuevamente. Si el
+              problema continúa, el equipo administrativo debe
+              revisar la configuración de tu perfil.
             </p>
           </div>
         </section>
@@ -403,10 +478,12 @@ async function PatientDashboard({
   }
 
   const summary =
-    ((summaryResult.data ?? []) as PatientSummary[])[0] ?? null;
+    ((summaryResult.data ?? []) as PatientSummary[])[0] ??
+    null;
 
   const process =
-    ((processResult.data ?? []) as PatientProcess[])[0] ?? null;
+    ((processResult.data ?? []) as PatientProcess[])[0] ??
+    null;
 
   const sessions =
     (sessionsResult.data ?? []) as PatientSession[];
@@ -415,7 +492,9 @@ async function PatientDashboard({
     (resourcesResult.data ?? []) as PatientResource[];
 
   if (!summary) {
-    return <PatientPendingDashboard profile={profile} />;
+    return (
+      <PatientPendingDashboard profile={profile} />
+    );
   }
 
   const upcomingSession = sessions
@@ -450,8 +529,8 @@ async function PatientDashboard({
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6E5648]">
-            Aquí encontrarás la información visible de tu proceso, próxima
-            sesión y recursos asignados.
+            Aquí encontrarás la información visible de tu
+            proceso, próxima sesión y recursos asignados.
           </p>
         </div>
 
@@ -468,11 +547,16 @@ async function PatientDashboard({
                 </h2>
 
                 <p className="mt-4 leading-8 text-[#6E5648]">
-                  {formatDateTime(upcomingSession.starts_at)}
+                  {formatDateTime(
+                    upcomingSession.starts_at,
+                  )}
                 </p>
 
                 <p className="mt-2 text-sm text-[#6E5648]">
-                  Estado: {getStatusLabel(upcomingSession.status)}
+                  Estado:{" "}
+                  {getStatusLabel(
+                    upcomingSession.status,
+                  )}
                 </p>
 
                 <p className="mt-2 text-sm text-[#6E5648]">
@@ -493,7 +577,8 @@ async function PatientDashboard({
                   </a>
                 ) : (
                   <p className="mt-6 rounded-2xl bg-[#F3E7DA] p-4 text-sm leading-7 text-[#6E5648]">
-                    El enlace de la sesión todavía no ha sido asignado.
+                    El enlace de la sesión todavía no ha sido
+                    asignado.
                   </p>
                 )}
               </>
@@ -517,14 +602,16 @@ async function PatientDashboard({
               <p>
                 Psicólogo:{" "}
                 <span className="font-semibold text-[#4E3427]">
-                  {summary.psychologist_name ?? "Por asignar"}
+                  {summary.psychologist_name ??
+                    "Por asignar"}
                 </span>
               </p>
 
               <p>
                 Sesiones incluidas:{" "}
                 <span className="font-semibold text-[#4E3427]">
-                  {summary.included_sessions ?? "Por definir"}
+                  {summary.included_sessions ??
+                    "Por definir"}
                 </span>
               </p>
 
@@ -540,7 +627,9 @@ async function PatientDashboard({
               <p>
                 Pago:{" "}
                 <span className="font-semibold text-[#4E3427]">
-                  {getStatusLabel(summary.payment_status)}
+                  {getStatusLabel(
+                    summary.payment_status,
+                  )}
                 </span>
               </p>
 
@@ -568,7 +657,8 @@ async function PatientDashboard({
                   </p>
 
                   <p className="mt-2 leading-8 text-[#6E5648]">
-                    {process.objetivo_principal ?? "Pendiente por definir"}
+                    {process.objetivo_principal ??
+                      "Pendiente por definir"}
                   </p>
                 </div>
 
@@ -578,7 +668,8 @@ async function PatientDashboard({
                   </p>
 
                   <p className="mt-2 leading-8 text-[#6E5648]">
-                    {process.trabajo_actual ?? "Pendiente por definir"}
+                    {process.trabajo_actual ??
+                      "Pendiente por definir"}
                   </p>
                 </div>
 
@@ -588,7 +679,8 @@ async function PatientDashboard({
                   </p>
 
                   <p className="mt-2 leading-8 text-[#6E5648]">
-                    {process.siguiente_paso ?? "Pendiente por definir"}
+                    {process.siguiente_paso ??
+                      "Pendiente por definir"}
                   </p>
                 </div>
 
@@ -606,8 +698,8 @@ async function PatientDashboard({
               </div>
             ) : (
               <p className="mt-4 leading-8 text-[#6E5648]">
-                Tu psicólogo todavía no ha registrado el resumen visible de
-                tu proceso.
+                Tu psicólogo todavía no ha registrado el
+                resumen visible de tu proceso.
               </p>
             )}
           </article>
@@ -629,7 +721,9 @@ async function PatientDashboard({
                     key={resource.resource_id}
                     className="rounded-2xl border border-[#E7D8C8] bg-[#FAF6F1] p-5"
                   >
-                    <p className="font-semibold">{resource.title}</p>
+                    <p className="font-semibold">
+                      {resource.title}
+                    </p>
 
                     {resource.description ? (
                       <p className="mt-2 text-sm leading-7 text-[#6E5648]">
@@ -673,11 +767,12 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { data: profileData, error: profileError } = await supabase
-    .from("profiles")
-    .select("full_name, email, role, is_active")
-    .eq("id", user.id)
-    .single();
+  const { data: profileData, error: profileError } =
+    await supabase
+      .from("profiles")
+      .select("full_name, email, role, is_active")
+      .eq("id", user.id)
+      .single();
 
   if (profileError || !profileData) {
     console.error("Profile error:", profileError);
@@ -692,11 +787,15 @@ export default async function DashboardPage() {
   }
 
   if (profile.role === "administrator") {
-    return <AdministratorDashboard profile={profile} />;
+    return (
+      <AdministratorDashboard profile={profile} />
+    );
   }
 
   if (profile.role === "psychologist") {
-    return <PsychologistDashboard profile={profile} />;
+    return (
+      <PsychologistDashboard profile={profile} />
+    );
   }
 
   return (
