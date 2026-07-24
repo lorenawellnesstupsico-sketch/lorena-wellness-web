@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
-type AppRole = "administrator" | "psychologist" | "patient";
+type AppRole =
+  | "administrator"
+  | "psychologist"
+  | "patient";
 
 type ProfileRow = {
   full_name: string;
@@ -100,7 +103,8 @@ function formatDate(value: string | null) {
     return "Por definir";
   }
 
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
 
   if (!match) {
     return "Por definir";
@@ -110,7 +114,9 @@ function formatDate(value: string | null) {
   const month = Number(match[2]);
   const day = Number(match[3]);
 
-  const date = new Date(Date.UTC(year, month - 1, day));
+  const date = new Date(
+    Date.UTC(year, month - 1, day),
+  );
 
   if (Number.isNaN(date.getTime())) {
     return "Por definir";
@@ -201,8 +207,9 @@ function InactiveAccount({
           </h1>
 
           <p className="mt-5 leading-8 text-[#6E5648]">
-            El acceso a la plataforma debe ser revisado por el
-            equipo administrativo de Lorena Wellness TuPsico.
+            El acceso a la plataforma debe ser
+            revisado por el equipo administrativo de
+            Lorena Wellness TuPsico.
           </p>
         </div>
       </section>
@@ -228,9 +235,9 @@ function AdministratorDashboard({
       title: "Psicólogos",
       description:
         "Incorporar profesionales, activar cuentas y organizar sus pacientes asignados.",
-      status: "Próximo módulo",
-      href: null,
-      actionLabel: null,
+      status: "Módulo disponible",
+      href: "/dashboard/psicologos",
+      actionLabel: "Gestionar psicólogos",
     },
     {
       title: "Pagos y planes",
@@ -263,8 +270,9 @@ function AdministratorDashboard({
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6E5648]">
-            Desde este espacio se organizarán los pacientes,
-            psicólogos, planes, pagos y sesiones de TuPsico.
+            Desde este espacio se organizarán los
+            pacientes, psicólogos, planes, pagos y
+            sesiones de TuPsico.
           </p>
 
           <div className="mt-8 inline-flex rounded-full bg-[#76516E] px-5 py-3 text-sm font-semibold text-white">
@@ -288,7 +296,8 @@ function AdministratorDashboard({
                   {module.description}
                 </p>
 
-                {module.href && module.actionLabel ? (
+                {module.href &&
+                module.actionLabel ? (
                   <span className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#76516E] px-5 py-2.5 text-sm font-semibold text-white transition group-hover:bg-[#66445F]">
                     {module.actionLabel}
                   </span>
@@ -359,9 +368,10 @@ function PsychologistDashboard({
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6E5648]">
-            Aquí podrás consultar tus pacientes asignados,
-            actualizar sus procesos, organizar sesiones y
-            asignar recursos terapéuticos.
+            Aquí podrás consultar tus pacientes
+            asignados, actualizar sus procesos,
+            organizar sesiones y asignar recursos
+            terapéuticos.
           </p>
 
           <div className="mt-8 inline-flex rounded-full bg-[#76516E] px-5 py-3 text-sm font-semibold text-white">
@@ -384,8 +394,8 @@ function PsychologistDashboard({
               </h2>
 
               <p className="mt-4 leading-8 text-[#6E5648]">
-                Este módulo se habilitará en la siguiente etapa
-                de construcción.
+                Este módulo se habilitará en la
+                siguiente etapa de construcción.
               </p>
             </article>
           ))}
@@ -413,9 +423,9 @@ function PatientPendingDashboard({
           </h1>
 
           <p className="mt-5 leading-8 text-[#6E5648]">
-            El equipo administrativo debe asignarte un
-            psicólogo, un plan y activar tu ficha de paciente
-            antes de mostrar tu proceso.
+            El equipo administrativo debe asignarte
+            un psicólogo, un plan y activar tu ficha
+            de paciente antes de mostrar tu proceso.
           </p>
         </div>
       </section>
@@ -428,7 +438,9 @@ async function PatientDashboard({
   supabase,
 }: {
   profile: ProfileRow;
-  supabase: Awaited<ReturnType<typeof createClient>>;
+  supabase: Awaited<
+    ReturnType<typeof createClient>
+  >;
 }) {
   const [
     summaryResult,
@@ -467,9 +479,10 @@ async function PatientDashboard({
             </h1>
 
             <p className="mt-5 leading-8 text-[#6E5648]">
-              Cierra sesión e inténtalo nuevamente. Si el
-              problema continúa, el equipo administrativo debe
-              revisar la configuración de tu perfil.
+              Cierra sesión e inténtalo nuevamente.
+              Si el problema continúa, el equipo
+              administrativo debe revisar la
+              configuración de tu perfil.
             </p>
           </div>
         </section>
@@ -478,18 +491,24 @@ async function PatientDashboard({
   }
 
   const summary =
-    ((summaryResult.data ?? []) as PatientSummary[])[0] ??
-    null;
+    (
+      (summaryResult.data ??
+        []) as PatientSummary[]
+    )[0] ?? null;
 
   const process =
-    ((processResult.data ?? []) as PatientProcess[])[0] ??
-    null;
+    (
+      (processResult.data ??
+        []) as PatientProcess[]
+    )[0] ?? null;
 
   const sessions =
-    (sessionsResult.data ?? []) as PatientSession[];
+    (sessionsResult.data ??
+      []) as PatientSession[];
 
   const resources =
-    (resourcesResult.data ?? []) as PatientResource[];
+    (resourcesResult.data ??
+      []) as PatientResource[];
 
   if (!summary) {
     return (
@@ -507,7 +526,8 @@ async function PatientDashboard({
 
       return (
         activeStatuses.includes(session.status) &&
-        new Date(session.ends_at).getTime() >= Date.now()
+        new Date(session.ends_at).getTime() >=
+          Date.now()
       );
     })
     .sort(
@@ -529,8 +549,9 @@ async function PatientDashboard({
           </h1>
 
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6E5648]">
-            Aquí encontrarás la información visible de tu
-            proceso, próxima sesión y recursos asignados.
+            Aquí encontrarás la información visible
+            de tu proceso, próxima sesión y recursos
+            asignados.
           </p>
         </div>
 
@@ -568,7 +589,9 @@ async function PatientDashboard({
 
                 {upcomingSession.meet_url ? (
                   <a
-                    href={upcomingSession.meet_url}
+                    href={
+                      upcomingSession.meet_url
+                    }
                     target="_blank"
                     rel="noreferrer"
                     className="mt-6 inline-flex rounded-full bg-[#76516E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#66445F]"
@@ -577,14 +600,15 @@ async function PatientDashboard({
                   </a>
                 ) : (
                   <p className="mt-6 rounded-2xl bg-[#F3E7DA] p-4 text-sm leading-7 text-[#6E5648]">
-                    El enlace de la sesión todavía no ha sido
-                    asignado.
+                    El enlace de la sesión todavía
+                    no ha sido asignado.
                   </p>
                 )}
               </>
             ) : (
               <p className="mt-4 leading-8 text-[#6E5648]">
-                No tienes sesiones próximas programadas.
+                No tienes sesiones próximas
+                programadas.
               </p>
             )}
           </article>
@@ -595,7 +619,8 @@ async function PatientDashboard({
             </p>
 
             <h2 className="mt-4 text-2xl font-semibold">
-              {summary.plan_name ?? "Plan por definir"}
+              {summary.plan_name ??
+                "Plan por definir"}
             </h2>
 
             <div className="mt-5 space-y-3 text-sm leading-7 text-[#6E5648]">
@@ -636,7 +661,9 @@ async function PatientDashboard({
               <p>
                 Inicio:{" "}
                 <span className="font-semibold text-[#4E3427]">
-                  {formatDate(summary.start_date)}
+                  {formatDate(
+                    summary.start_date,
+                  )}
                 </span>
               </p>
             </div>
@@ -691,15 +718,18 @@ async function PatientDashboard({
                     </p>
 
                     <p className="mt-2 leading-7 text-[#6E5648]">
-                      {process.recordatorio_terapeutico}
+                      {
+                        process.recordatorio_terapeutico
+                      }
                     </p>
                   </div>
                 ) : null}
               </div>
             ) : (
               <p className="mt-4 leading-8 text-[#6E5648]">
-                Tu psicólogo todavía no ha registrado el
-                resumen visible de tu proceso.
+                Tu psicólogo todavía no ha
+                registrado el resumen visible de tu
+                proceso.
               </p>
             )}
           </article>
@@ -716,37 +746,46 @@ async function PatientDashboard({
 
             {resources.length > 0 ? (
               <div className="mt-5 space-y-4">
-                {resources.slice(0, 3).map((resource) => (
-                  <div
-                    key={resource.resource_id}
-                    className="rounded-2xl border border-[#E7D8C8] bg-[#FAF6F1] p-5"
-                  >
-                    <p className="font-semibold">
-                      {resource.title}
-                    </p>
-
-                    {resource.description ? (
-                      <p className="mt-2 text-sm leading-7 text-[#6E5648]">
-                        {resource.description}
+                {resources
+                  .slice(0, 3)
+                  .map((resource) => (
+                    <div
+                      key={
+                        resource.resource_id
+                      }
+                      className="rounded-2xl border border-[#E7D8C8] bg-[#FAF6F1] p-5"
+                    >
+                      <p className="font-semibold">
+                        {resource.title}
                       </p>
-                    ) : null}
 
-                    {resource.resource_url ? (
-                      <a
-                        href={resource.resource_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-3 inline-flex text-sm font-semibold text-[#76516E] underline"
-                      >
-                        Abrir recurso
-                      </a>
-                    ) : null}
-                  </div>
-                ))}
+                      {resource.description ? (
+                        <p className="mt-2 text-sm leading-7 text-[#6E5648]">
+                          {
+                            resource.description
+                          }
+                        </p>
+                      ) : null}
+
+                      {resource.resource_url ? (
+                        <a
+                          href={
+                            resource.resource_url
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 inline-flex text-sm font-semibold text-[#76516E] underline"
+                        >
+                          Abrir recurso
+                        </a>
+                      ) : null}
+                    </div>
+                  ))}
               </div>
             ) : (
               <p className="mt-4 leading-8 text-[#6E5648]">
-                Todavía no tienes recursos asignados.
+                Todavía no tienes recursos
+                asignados.
               </p>
             )}
           </article>
@@ -767,15 +806,22 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { data: profileData, error: profileError } =
-    await supabase
-      .from("profiles")
-      .select("full_name, email, role, is_active")
-      .eq("id", user.id)
-      .single();
+  const {
+    data: profileData,
+    error: profileError,
+  } = await supabase
+    .from("profiles")
+    .select(
+      "full_name, email, role, is_active",
+    )
+    .eq("id", user.id)
+    .single();
 
   if (profileError || !profileData) {
-    console.error("Profile error:", profileError);
+    console.error(
+      "Profile error:",
+      profileError,
+    );
 
     redirect("/login");
   }
@@ -783,18 +829,24 @@ export default async function DashboardPage() {
   const profile = profileData as ProfileRow;
 
   if (!profile.is_active) {
-    return <InactiveAccount profile={profile} />;
+    return (
+      <InactiveAccount profile={profile} />
+    );
   }
 
   if (profile.role === "administrator") {
     return (
-      <AdministratorDashboard profile={profile} />
+      <AdministratorDashboard
+        profile={profile}
+      />
     );
   }
 
   if (profile.role === "psychologist") {
     return (
-      <PsychologistDashboard profile={profile} />
+      <PsychologistDashboard
+        profile={profile}
+      />
     );
   }
 
