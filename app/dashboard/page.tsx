@@ -355,6 +355,33 @@ function PsychologistDashboard({
 }: {
   profile: ProfileRow;
 }) {
+  const modules = [
+    {
+      title: "Pacientes asignados",
+      description:
+        "Consulta las personas asignadas a tu perfil profesional y accede a su información autorizada.",
+      status: "Módulo disponible",
+      href: "/dashboard/mis-pacientes",
+      actionLabel: "Ver mis pacientes",
+    },
+    {
+      title: "Procesos terapéuticos",
+      description:
+        "Gestiona objetivos, trabajo actual, siguientes pasos y seguimiento de cada proceso.",
+      status: "Próxima etapa",
+      href: null,
+      actionLabel: null,
+    },
+    {
+      title: "Sesiones y recursos",
+      description:
+        "Organiza sesiones y asigna guías, ejercicios y recursos terapéuticos.",
+      status: "Próxima etapa",
+      href: null,
+      actionLabel: null,
+    },
+  ];
+
   return (
     <DashboardShell profile={profile}>
       <section className="mx-auto max-w-7xl px-6 py-12 md:px-10">
@@ -363,7 +390,7 @@ function PsychologistDashboard({
             Espacio profesional
           </p>
 
-          <h1 className="mt-4 text-4xl font-bold md:text-5xl">
+          <h1 className="mt-4 text-4xl font-bold leading-tight md:text-5xl">
             Bienvenido, {profile.full_name}
           </h1>
 
@@ -380,25 +407,55 @@ function PsychologistDashboard({
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {[
-            "Pacientes asignados",
-            "Procesos terapéuticos",
-            "Sesiones y recursos",
-          ].map((title) => (
-            <article
-              key={title}
-              className="rounded-[2rem] border border-[#E7D8C8] bg-[#FFFDFC] p-7 shadow-sm"
-            >
-              <h2 className="text-xl font-semibold">
-                {title}
-              </h2>
+          {modules.map((module) => {
+            const content = (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8C5A3C]">
+                  {module.status}
+                </p>
 
-              <p className="mt-4 leading-8 text-[#6E5648]">
-                Este módulo se habilitará en la
-                siguiente etapa de construcción.
-              </p>
-            </article>
-          ))}
+                <h2 className="mt-4 text-xl font-semibold">
+                  {module.title}
+                </h2>
+
+                <p className="mt-4 leading-8 text-[#6E5648]">
+                  {module.description}
+                </p>
+
+                {module.href &&
+                module.actionLabel ? (
+                  <span className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#76516E] px-5 py-2.5 text-sm font-semibold text-white transition group-hover:bg-[#66445F]">
+                    {module.actionLabel}
+                  </span>
+                ) : (
+                  <span className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-[#DED2C5] bg-[#FAF6F1] px-5 py-2.5 text-sm font-semibold text-[#80695B]">
+                    En construcción
+                  </span>
+                )}
+              </>
+            );
+
+            if (module.href) {
+              return (
+                <Link
+                  key={module.title}
+                  href={module.href}
+                  className="group rounded-[2rem] border border-[#D7C1D2] bg-[#FFFDFC] p-7 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[#76516E] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#76516E] focus:ring-offset-2"
+                >
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <article
+                key={module.title}
+                className="rounded-[2rem] border border-[#E7D8C8] bg-[#FFFDFC] p-7 shadow-sm"
+              >
+                {content}
+              </article>
+            );
+          })}
         </div>
       </section>
     </DashboardShell>
@@ -589,9 +646,7 @@ async function PatientDashboard({
 
                 {upcomingSession.meet_url ? (
                   <a
-                    href={
-                      upcomingSession.meet_url
-                    }
+                    href={upcomingSession.meet_url}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-6 inline-flex rounded-full bg-[#76516E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#66445F]"
@@ -750,9 +805,7 @@ async function PatientDashboard({
                   .slice(0, 3)
                   .map((resource) => (
                     <div
-                      key={
-                        resource.resource_id
-                      }
+                      key={resource.resource_id}
                       className="rounded-2xl border border-[#E7D8C8] bg-[#FAF6F1] p-5"
                     >
                       <p className="font-semibold">
@@ -761,17 +814,13 @@ async function PatientDashboard({
 
                       {resource.description ? (
                         <p className="mt-2 text-sm leading-7 text-[#6E5648]">
-                          {
-                            resource.description
-                          }
+                          {resource.description}
                         </p>
                       ) : null}
 
                       {resource.resource_url ? (
                         <a
-                          href={
-                            resource.resource_url
-                          }
+                          href={resource.resource_url}
                           target="_blank"
                           rel="noreferrer"
                           className="mt-3 inline-flex text-sm font-semibold text-[#76516E] underline"
