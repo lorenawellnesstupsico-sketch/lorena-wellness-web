@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { EditPatientProcessForm } from "@/components/dashboard/edit-patient-process-form";
 import { requirePsychologist } from "@/lib/auth/require-psychologist";
 
 type AssignedPatientDetail = {
@@ -188,7 +189,9 @@ export default async function AssignedPatientDetailPage({
       error,
     );
 
-    redirect("/dashboard/mis-pacientes");
+    redirect(
+      "/dashboard/mis-pacientes",
+    );
   }
 
   const patient =
@@ -197,7 +200,9 @@ export default async function AssignedPatientDetailPage({
     )[0] ?? null;
 
   if (!patient) {
-    redirect("/dashboard/mis-pacientes");
+    redirect(
+      "/dashboard/mis-pacientes",
+    );
   }
 
   return (
@@ -295,15 +300,13 @@ export default async function AssignedPatientDetailPage({
         </div>
 
         <section className="mt-8 rounded-[2rem] border border-[#E7D8C8] bg-[#FFFDFC] p-6 shadow-sm md:p-8">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8C5A3C]">
-              Información general
-            </p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8C5A3C]">
+            Información general
+          </p>
 
-            <h2 className="mt-3 text-2xl font-semibold">
-              Datos del paciente
-            </h2>
-          </div>
+          <h2 className="mt-3 text-2xl font-semibold">
+            Datos del paciente
+          </h2>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <InformationBlock
@@ -339,15 +342,13 @@ export default async function AssignedPatientDetailPage({
         </section>
 
         <section className="mt-8 rounded-[2rem] border border-[#E7D8C8] bg-[#FFFDFC] p-6 shadow-sm md:p-8">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8C5A3C]">
-              Servicio contratado
-            </p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8C5A3C]">
+            Servicio contratado
+          </p>
 
-            <h2 className="mt-3 text-2xl font-semibold">
-              Plan del paciente
-            </h2>
-          </div>
+          <h2 className="mt-3 text-2xl font-semibold">
+            Plan del paciente
+          </h2>
 
           {patient.plan_id ? (
             <div className="mt-6 grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
@@ -406,90 +407,53 @@ export default async function AssignedPatientDetailPage({
           )}
         </section>
 
-        <section className="mt-8 rounded-[2rem] border border-[#E7D8C8] bg-[#FFFDFC] p-6 shadow-sm md:p-8">
+        <section className="mt-8 rounded-[2rem] border border-[#DCC9D7] bg-[#FFFDFC] p-6 shadow-sm md:p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#8C5A3C]">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#76516E]">
                 Proceso terapéutico
               </p>
 
               <h2 className="mt-3 text-2xl font-semibold">
-                Seguimiento actual
+                Seguimiento y actualización
               </h2>
+
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-[#6E5648]">
+                Registra el estado actual del
+                acompañamiento. Esta información
+                puede actualizarse a medida que
+                avance el proceso.
+              </p>
             </div>
 
-            {patient.process_id ? (
-              <p className="text-sm text-[#6E5648]">
-                Última actualización:{" "}
-                {formatDateTime(
-                  patient.process_updated_at,
-                )}
-              </p>
-            ) : null}
+            <div className="rounded-full bg-[#F4EAF2] px-4 py-2 text-xs font-semibold text-[#76516E]">
+              {patient.process_id
+                ? `Actualizado: ${formatDateTime(
+                    patient.process_updated_at,
+                  )}`
+                : "Primer registro"}
+            </div>
           </div>
 
-          {patient.process_id ? (
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              <InformationBlock
-                title="Enfoque actual"
-                value={
-                  patient.enfoque_actual ??
-                  "Pendiente por definir"
-                }
-              />
+          <EditPatientProcessForm
+            patientId={patient.patient_id}
+            initialValues={{
+              enfoqueActual:
+                patient.enfoque_actual,
 
-              <InformationBlock
-                title="Objetivo principal"
-                value={
-                  patient.objetivo_principal ??
-                  "Pendiente por definir"
-                }
-              />
+              objetivoPrincipal:
+                patient.objetivo_principal,
 
-              <InformationBlock
-                title="Trabajo actual"
-                value={
-                  patient.trabajo_actual ??
-                  "Pendiente por definir"
-                }
-              />
+              trabajoActual:
+                patient.trabajo_actual,
 
-              <InformationBlock
-                title="Siguiente paso"
-                value={
-                  patient.siguiente_paso ??
-                  "Pendiente por definir"
-                }
-              />
+              siguientePaso:
+                patient.siguiente_paso,
 
-              <div className="md:col-span-2 rounded-2xl border border-[#DCC9D7] bg-[#F4EAF2] p-6">
-                <p className="text-sm font-semibold text-[#4E3427]">
-                  Recordatorio terapéutico visible
-                  para el paciente
-                </p>
-
-                <p className="mt-3 leading-8 text-[#6E5648]">
-                  {patient.recordatorio_terapeutico ??
-                    "Todavía no se ha registrado un recordatorio terapéutico."}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-6 rounded-2xl border border-dashed border-[#DCCCBD] bg-[#FAF6F1] p-7">
-              <p className="font-semibold">
-                Proceso todavía sin registro
-              </p>
-
-              <p className="mt-2 max-w-3xl text-sm leading-7 text-[#6E5648]">
-                Este paciente aún no tiene un
-                resumen terapéutico registrado.
-                Próximamente habilitaremos desde esta
-                misma ficha la edición de objetivos,
-                trabajo actual, siguientes pasos y
-                recordatorios.
-              </p>
-            </div>
-          )}
+              recordatorioTerapeutico:
+                patient.recordatorio_terapeutico,
+            }}
+          />
         </section>
 
         <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -504,7 +468,7 @@ export default async function AssignedPatientDetailPage({
 
             <p className="mt-4 leading-8 text-[#6E5648]">
               La programación, historial y gestión
-              de sesiones se habilitará en la
+              de sesiones se habilitará en una
               siguiente fase.
             </p>
 
@@ -542,10 +506,9 @@ export default async function AssignedPatientDetailPage({
           <p className="mt-3 max-w-4xl text-sm leading-7 text-[#6E5648]">
             Esta ficha únicamente puede abrirse
             cuando el paciente está asignado al
-            psicólogo autenticado. Cambiar
-            manualmente el identificador de la URL
-            no concede acceso a pacientes de otros
-            profesionales.
+            psicólogo autenticado. El guardado del
+            proceso vuelve a validar esa asignación
+            directamente en Supabase.
           </p>
         </div>
       </section>
