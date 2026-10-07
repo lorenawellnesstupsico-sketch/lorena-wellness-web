@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { CreatePatientSessionForm } from "@/components/dashboard/create-patient-session-form";
 import { EditPatientProcessForm } from "@/components/dashboard/edit-patient-process-form";
+import { EditPatientSessionForm } from "@/components/dashboard/edit-patient-session-form";
 import { requirePsychologist } from "@/lib/auth/require-psychologist";
 
 type AssignedPatientDetail = {
@@ -47,13 +48,17 @@ type SessionRow = {
   created_at: string;
 };
 
-function formatDateOnly(value: string | null) {
+function formatDateOnly(
+  value: string | null,
+) {
   if (!value) {
     return "Por definir";
   }
 
   const match =
-    /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+      value,
+    );
 
   if (!match) {
     return "Por definir";
@@ -84,7 +89,9 @@ function formatDateOnly(value: string | null) {
   ).format(date);
 }
 
-function formatDateTime(value: string | null) {
+function formatDateTime(
+  value: string | null,
+) {
   if (!value) {
     return "Por definir";
   }
@@ -103,6 +110,49 @@ function formatDateTime(value: string | null) {
       timeZone: "America/Bogota",
     },
   ).format(date);
+}
+
+function getBogotaParts(
+  value: string,
+) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return {
+      date: "",
+      time: "",
+    };
+  }
+
+  const parts =
+    new Intl.DateTimeFormat(
+      "en-US",
+      {
+        timeZone: "America/Bogota",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      },
+    ).formatToParts(date);
+
+  const values =
+    Object.fromEntries(
+      parts.map((part) => [
+        part.type,
+        part.value,
+      ]),
+    );
+
+  return {
+    date:
+      `${values.year}-${values.month}-${values.day}`,
+
+    time:
+      `${values.hour}:${values.minute}`,
+  };
 }
 
 function getDurationMinutes(
@@ -598,8 +648,8 @@ export default async function AssignedPatientDetailPage({
               </h2>
 
               <p className="mt-3 max-w-3xl text-sm leading-7 text-[#6E5648]">
-                Registra la fecha, hora y
-                duración de la próxima sesión.
+                Registra la fecha, hora y duración
+                de la próxima sesión.
               </p>
             </div>
 
@@ -641,14 +691,13 @@ export default async function AssignedPatientDetailPage({
           {sessions.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-[#DCCCBD] bg-[#FAF6F1] p-7">
               <p className="font-semibold">
-                Todavía no hay sesiones
-                registradas
+                Todavía no hay sesiones registradas
               </p>
 
               <p className="mt-2 text-sm leading-7 text-[#6E5648]">
-                Utiliza el formulario anterior
-                para programar la primera sesión
-                de este paciente.
+                Utiliza el formulario anterior para
+                programar la primera sesión de este
+                paciente.
               </p>
             </div>
           ) : (
@@ -659,6 +708,11 @@ export default async function AssignedPatientDetailPage({
                     getDurationMinutes(
                       session.starts_at,
                       session.ends_at,
+                    ) ?? 60;
+
+                  const localDateTime =
+                    getBogotaParts(
+                      session.starts_at,
                     );
 
                   return (
@@ -684,13 +738,10 @@ export default async function AssignedPatientDetailPage({
                             )}
                           </p>
 
-                          {duration !==
-                          null ? (
-                            <p className="mt-1 text-sm text-[#6E5648]">
-                              Duración:{" "}
-                              {duration} minutos
-                            </p>
-                          ) : null}
+                          <p className="mt-1 text-sm text-[#6E5648]">
+                            Duración:{" "}
+                            {duration} minutos
+                          </p>
                         </div>
 
                         <span
@@ -718,8 +769,7 @@ export default async function AssignedPatientDetailPage({
 
                         <div className="rounded-2xl border border-[#DCC9D7] bg-[#F4EAF2] p-5">
                           <p className="text-sm font-semibold">
-                            👤 Visible para el
-                            paciente
+                            👤 Visible para el paciente
                           </p>
 
                           <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[#6E5648]">
@@ -729,7 +779,7 @@ export default async function AssignedPatientDetailPage({
                         </div>
                       </div>
 
-                      <div className="mt-5 border-t border-[#E7D8C8] pt-5">
+                      <div className="mt-5 flex flex-wrap gap-3 border-t border-[#E7D8C8] pt-5">
                         {session.meet_url ? (
                           <a
                             href={
@@ -742,11 +792,47 @@ export default async function AssignedPatientDetailPage({
                             Abrir Google Meet
                           </a>
                         ) : (
-                          <span className="inline-flex rounded-full border border-[#DCC9D7] bg-white px-4 py-2 text-xs font-semibold text-[#76516E]">
+                          <span className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#DCC9D7] bg-white px-4 py-2 text-xs font-semibold text-[#76516E]">
                             Google Meet pendiente
                           </span>
                         )}
                       </div>
+
+                      <details className="mt-5 rounded-2xl border border-[#DCC9D7] bg-white">
+                        <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-[#76516E]">
+                          Gestionar sesión
+                        </summary>
+
+                        <div className="border-t border-[#E7D8C8] px-5 pb-5">
+                          <EditPatientSessionForm
+                            key={`${session.session_id}-${session.starts_at}-${session.status}`}
+                            sessionId={
+                              session.session_id
+                            }
+                            initialTitle={
+                              session.title
+                            }
+                            initialDate={
+                              localDateTime.date
+                            }
+                            initialTime={
+                              localDateTime.time
+                            }
+                            initialDurationMinutes={
+                              duration
+                            }
+                            initialStatus={
+                              session.status
+                            }
+                            initialNotesInternal={
+                              session.notes_internal
+                            }
+                            initialNotesVisibleToPatient={
+                              session.notes_visible_to_patient
+                            }
+                          />
+                        </div>
+                      </details>
                     </article>
                   );
                 },
@@ -761,13 +847,11 @@ export default async function AssignedPatientDetailPage({
           </p>
 
           <p className="mt-3 max-w-4xl text-sm leading-7 text-[#6E5648]">
-            La plataforma vuelve a validar en
-            Supabase que este paciente esté
-            asignado al psicólogo autenticado
-            antes de consultar o crear sesiones.
-            Las notas internas permanecen
-            separadas del contenido destinado al
-            paciente.
+            La plataforma valida en Supabase que
+            este paciente y cada una de sus sesiones
+            pertenezcan al psicólogo autenticado.
+            Las notas internas permanecen separadas
+            del contenido visible para el paciente.
           </p>
         </div>
       </section>

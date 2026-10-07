@@ -19,6 +19,11 @@ export type CreatePatientSessionActionState = {
   message: string;
 };
 
+export type UpdatePatientSessionActionState = {
+  status: ActionStatus;
+  message: string;
+};
+
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -27,6 +32,15 @@ const DATE_PATTERN =
 
 const TIME_PATTERN =
   /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const SESSION_STATUSES = new Set([
+  "scheduled",
+  "confirmed",
+  "completed",
+  "canceled",
+  "no_show",
+  "rescheduled",
+]);
 
 function getText(
   formData: FormData,
@@ -66,6 +80,31 @@ function isValidDate(value: string) {
     date.getUTCFullYear() === year &&
     date.getUTCMonth() === month - 1 &&
     date.getUTCDate() === day
+  );
+}
+
+function buildBogotaDateTime(
+  date: string,
+  time: string,
+) {
+  return new Date(
+    `${date}T${time}:00-05:00`,
+  );
+}
+
+function revalidatePatientPaths(
+  patientId: string,
+) {
+  revalidatePath(
+    `/dashboard/mis-pacientes/${patientId}`,
+  );
+
+  revalidatePath(
+    "/dashboard/mis-pacientes",
+  );
+
+  revalidatePath(
+    "/dashboard",
   );
 }
 
@@ -212,17 +251,7 @@ export async function savePatientProcessAction(
     };
   }
 
-  revalidatePath(
-    `/dashboard/mis-pacientes/${patientId}`,
-  );
-
-  revalidatePath(
-    "/dashboard/mis-pacientes",
-  );
-
-  revalidatePath(
-    "/dashboard",
-  );
+  revalidatePatientPaths(patientId);
 
   return {
     status: "success",
@@ -344,17 +373,11 @@ export async function createPatientSessionAction(
     };
   }
 
-  /*
-   * Primera versión de agenda:
-   * utilizamos explícitamente hora Colombia UTC-5.
-   *
-   * Cuando integremos Google Calendar,
-   * centralizaremos también el manejo
-   * completo de zonas horarias.
-   */
-  const startsAt = new Date(
-    `${sessionDate}T${sessionTime}:00-05:00`,
-  );
+  const startsAt =
+    buildBogotaDateTime(
+      sessionDate,
+      sessionTime,
+    );
 
   if (
     Number.isNaN(
@@ -423,21 +446,235 @@ export async function createPatientSessionAction(
     };
   }
 
-  revalidatePath(
-    `/dashboard/mis-pacientes/${patientId}`,
-  );
-
-  revalidatePath(
-    "/dashboard/mis-pacientes",
-  );
-
-  revalidatePath(
-    "/dashboard",
-  );
+  revalidatePatientPaths(patientId);
 
   return {
     status: "success",
     message:
       "Sesión programada correctamente.",
+  };
+}
+
+export async function updatePatientSessionAction(
+  _previousState: UpdatePatientSessionActionState,
+  formData: FormData,
+): Promise<UpdatePatientSessionActionState> {
+  const {
+    supabase,
+  } = await requirePsychologist();
+
+  const sessionId = getText(
+    formData,
+    "session_id",
+  );
+
+  const title = getText(
+    formData,
+    "title",
+  );
+
+  const sessionDate = getText(
+    formData,
+    "session_date",
+  );
+
+  const sessionTime = getText(
+    formData,
+    "session_time",
+  );
+
+  const durationValue = getText(
+    formData,
+    "duration_minutes",
+  );
+
+  const status = getText(
+    formData,
+    "status",
+  );
+
+  const notesInternal = getText(
+    formData,
+    "notes_internal",
+  );
+
+  const notesVisibleToPatient =
+    getText(
+      formData,
+      "notes_visible_to_patient",
+    );
+
+  if (!UUID_PATTERN.test(sessionId)) {
+    return {
+      status: "error",
+      message:
+        "El identificador de la sesión no es válido.",
+    };
+  }
+
+  if (
+    title.length < 3 ||
+    title.length > 200
+  ) {
+    return {
+      status: "error",
+      message:
+        "El título de la sesión debe tener entre 3 y 200 caracteres.",
+    };
+  }
+
+  if (!isValidDate(sessionDate)) {
+    return {
+      status: "error",
+      message:
+        "Selecciona una fecha válida.",
+    };
+  }
+
+  if (!TIME_PATTERN.test(sessionTime)) {
+    return {
+      status: "error",
+      message:
+        "Selecciona una hora válida.",
+    };
+  }
+
+  const durationMinutes =
+    Number(durationValue);
+
+  if (
+    !Number.isInteger(durationMinutes) ||
+    durationMinutes < 15 ||
+    durationMinutes > 240
+  ) {
+    return {
+      status: "error",
+      message:
+        "La duración debe estar entre 15 minutos y 4 horas.",
+    };
+  }
+
+  if (!SESSION_STATUSES.has(status)) {
+    return {
+      status: "error",
+      message:
+        "El estado seleccionado no es válido.",
+    };
+  }
+
+  if (notesInternal.length > 10000) {
+    return {
+      status: "error",
+      message:
+        "Las notas internas no pueden superar los 10.000 caracteres.",
+    };
+  }
+
+  if (
+    notesVisibleToPatient.length >
+    5000
+  ) {
+    return {
+      status: "error",
+      message:
+        "El mensaje visible para el paciente no puede superar los 5.000 caracteres.",
+    };
+  }
+
+  const startsAt =
+    buildBogotaDateTime(
+      sessionDate,
+      sessionTime,
+    );
+
+  if (
+    Number.isNaN(
+      startsAt.getTime(),
+    )
+  ) {
+    return {
+      status: "error",
+      message:
+        "No fue posible interpretar la fecha y hora seleccionadas.",
+    };
+  }
+
+  const endsAt = new Date(
+    startsAt.getTime() +
+      durationMinutes * 60 * 1000,
+  );
+
+  const {
+    data,
+    error,
+  } = await supabase.rpc(
+    "update_my_assigned_patient_session",
+    {
+      target_session_id:
+        sessionId,
+      new_title:
+        title,
+      new_starts_at:
+        startsAt.toISOString(),
+      new_ends_at:
+        endsAt.toISOString(),
+      new_status:
+        status,
+      new_notes_internal:
+        notesInternal,
+      new_notes_visible_to_patient:
+        notesVisibleToPatient,
+    },
+  );
+
+  if (error) {
+    console.error(
+      "Error updating patient session:",
+      error,
+    );
+
+    return {
+      status: "error",
+      message:
+        "No fue posible actualizar la sesión. Verifica la información e intenta nuevamente.",
+    };
+  }
+
+  if (!data || data.length === 0) {
+    return {
+      status: "error",
+      message:
+        "Supabase no confirmó la actualización de la sesión.",
+    };
+  }
+
+  const updatedSession =
+    data[0] as {
+      patient_id?: string;
+    };
+
+  if (
+    updatedSession.patient_id &&
+    UUID_PATTERN.test(
+      updatedSession.patient_id,
+    )
+  ) {
+    revalidatePatientPaths(
+      updatedSession.patient_id,
+    );
+  } else {
+    revalidatePath(
+      "/dashboard/mis-pacientes",
+    );
+
+    revalidatePath(
+      "/dashboard",
+    );
+  }
+
+  return {
+    status: "success",
+    message:
+      "Sesión actualizada correctamente.",
   };
 }
