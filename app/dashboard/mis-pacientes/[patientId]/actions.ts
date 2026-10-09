@@ -1,8 +1,10 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
 
 import { requirePsychologist } from "@/lib/auth/require-psychologist";
+import { createGoogleCalendarEventForSession } from "@/lib/google-calendar/create-session-event";
 
 type ActionStatus =
   | "idle"
@@ -45,7 +47,7 @@ const SESSION_STATUSES = new Set([
 function getText(
   formData: FormData,
   field: string,
-) {
+): string {
   const value = formData.get(field);
 
   return typeof value === "string"
@@ -53,27 +55,20 @@ function getText(
     : "";
 }
 
-function isValidDate(value: string) {
+function isValidDate(value: string): boolean {
   if (!DATE_PATTERN.test(value)) {
     return false;
   }
 
-  const [
-    yearText,
-    monthText,
-    dayText,
-  ] = value.split("-");
+  const [yearText, monthText, dayText] =
+    value.split("-");
 
   const year = Number(yearText);
   const month = Number(monthText);
   const day = Number(dayText);
 
   const date = new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-    ),
+    Date.UTC(year, month - 1, day),
   );
 
   return (
@@ -86,7 +81,7 @@ function isValidDate(value: string) {
 function buildBogotaDateTime(
   date: string,
   time: string,
-) {
+): Date {
   return new Date(
     `${date}T${time}:00-05:00`,
   );
@@ -94,7 +89,7 @@ function buildBogotaDateTime(
 
 function revalidatePatientPaths(
   patientId: string,
-) {
+): void {
   revalidatePath(
     `/dashboard/mis-pacientes/${patientId}`,
   );
@@ -107,6 +102,42 @@ function revalidatePatientPaths(
     "/dashboard",
   );
 }
+
+function getCreatedSessionId(
+  data: unknown,
+): string | null {
+  const firstRow = Array.isArray(data)
+    ? data[0]
+    : data;
+
+  if (
+    !firstRow ||
+    typeof firstRow !== "object"
+  ) {
+    return null;
+  }
+
+  const row = firstRow as Record<
+    string,
+    unknown
+  >;
+
+  const possibleId =
+    typeof row.session_id === "string"
+      ? row.session_id
+      : typeof row.id === "string"
+        ? row.id
+        : null;
+
+  return possibleId &&
+    UUID_PATTERN.test(possibleId)
+    ? possibleId
+    : null;
+}
+
+// ============================================================
+// GUARDAR PROCESO TERAPÉUTICO
+// ============================================================
 
 export async function savePatientProcessAction(
   _previousState: SavePatientProcessActionState,
@@ -216,15 +247,21 @@ export async function savePatientProcessAction(
   } = await supabase.rpc(
     "save_my_assigned_patient_process",
     {
-      target_patient_id: patientId,
+      target_patient_id:
+        patientId,
+
       new_enfoque_actual:
         enfoqueActual,
+
       new_objetivo_principal:
         objetivoPrincipal,
+
       new_trabajo_actual:
         trabajoActual,
+
       new_siguiente_paso:
         siguientePaso,
+
       new_recordatorio_terapeutico:
         recordatorioTerapeutico,
     },
@@ -243,7 +280,11 @@ export async function savePatientProcessAction(
     };
   }
 
-  if (!data || data.length === 0) {
+  if (
+    !data ||
+    (Array.isArray(data) &&
+      data.length === 0)
+  ) {
     return {
       status: "error",
       message:
@@ -260,12 +301,17 @@ export async function savePatientProcessAction(
   };
 }
 
+// ============================================================
+// CREAR SESIÓN Y SINCRONIZAR CON GOOGLE CALENDAR
+// ============================================================
+
 export async function createPatientSessionAction(
   _previousState: CreatePatientSessionActionState,
   formData: FormData,
 ): Promise<CreatePatientSessionActionState> {
   const {
     supabase,
+    user,
   } = await requirePsychologist();
 
   const patientId = getText(
@@ -298,11 +344,10 @@ export async function createPatientSessionAction(
     "notes_internal",
   );
 
-  const notesVisibleToPatient =
-    getText(
-      formData,
-      "notes_visible_to_patient",
-    );
+  const notesVisibleToPatient = getText(
+    formData,
+    "notes_visible_to_patient",
+  );
 
   if (!UUID_PATTERN.test(patientId)) {
     return {
@@ -380,9 +425,7 @@ export async function createPatientSessionAction(
     );
 
   if (
-    Number.isNaN(
-      startsAt.getTime(),
-    )
+    Number.isNaN(startsAt.getTime())
   ) {
     return {
       status: "error",
@@ -406,20 +449,31 @@ export async function createPatientSessionAction(
       durationMinutes * 60 * 1000,
   );
 
+  // 1. Guardar primero la sesión en Supabase.
+  // El RPC comprueba que el paciente esté asignado
+  // al psicólogo autenticado.
+
   const {
     data,
     error,
   } = await supabase.rpc(
     "create_my_assigned_patient_session",
     {
-      target_patient_id: patientId,
-      new_title: title,
+      target_patient_id:
+        patientId,
+
+      new_title:
+        title,
+
       new_starts_at:
         startsAt.toISOString(),
+
       new_ends_at:
         endsAt.toISOString(),
+
       new_notes_internal:
         notesInternal,
+
       new_notes_visible_to_patient:
         notesVisibleToPatient,
     },
@@ -438,7 +492,11 @@ export async function createPatientSessionAction(
     };
   }
 
-  if (!data || data.length === 0) {
+  if (
+    !data ||
+    (Array.isArray(data) &&
+      data.length === 0)
+  ) {
     return {
       status: "error",
       message:
@@ -446,14 +504,81 @@ export async function createPatientSessionAction(
     };
   }
 
+  // La sesión ya existe desde este momento.
+  // Nunca debemos crearla nuevamente solo porque
+  // falle la conexión con Google.
+
+  const sessionId =
+    getCreatedSessionId(data);
+
+  if (!sessionId) {
+    console.error(
+      "El RPC creó una sesión sin devolver un ID reconocible.",
+    );
+
+    revalidatePatientPaths(patientId);
+
+    return {
+      status: "success",
+      message:
+        "La sesión quedó registrada en TuPsico, pero no fue posible identificarla para generar Google Meet. Revisa el historial antes de intentar programarla nuevamente.",
+    };
+  }
+
+  // 2. Intentar crear el evento y solicitar Meet.
+  // La función utiliza las credenciales privadas
+  // guardadas en el servidor.
+
+  const googleResult =
+    await createGoogleCalendarEventForSession({
+      sessionId,
+      psychologistId:
+        user.id,
+    });
+
+  // 3. Actualizar la vista del psicólogo y del paciente.
+
   revalidatePatientPaths(patientId);
+
+  // 4. Informar el resultado real de Google.
+
+  if (googleResult.status === "created") {
+    return {
+      status: "success",
+      message:
+        "Sesión programada correctamente. Google Calendar creó el evento y generó el enlace de Google Meet.",
+    };
+  }
+
+  if (googleResult.status === "pending") {
+    return {
+      status: "success",
+      message:
+        "La sesión quedó programada y el evento se creó en Google Calendar. El enlace de Google Meet todavía está pendiente. No programes otra sesión duplicada.",
+    };
+  }
+
+  if (
+    googleResult.status ===
+    "not_connected"
+  ) {
+    return {
+      status: "success",
+      message:
+        "La sesión quedó programada en TuPsico. El profesional aún no tiene Google Calendar conectado, por lo que no se generó un enlace Meet.",
+    };
+  }
 
   return {
     status: "success",
     message:
-      "Sesión programada correctamente.",
+      "La sesión quedó programada en TuPsico, pero hubo un problema al sincronizarla con Google Calendar. Revisa el historial antes de intentar crear otra cita.",
   };
 }
+
+// ============================================================
+// ACTUALIZAR UNA SESIÓN EXISTENTE
+// ============================================================
 
 export async function updatePatientSessionAction(
   _previousState: UpdatePatientSessionActionState,
@@ -498,11 +623,10 @@ export async function updatePatientSessionAction(
     "notes_internal",
   );
 
-  const notesVisibleToPatient =
-    getText(
-      formData,
-      "notes_visible_to_patient",
-    );
+  const notesVisibleToPatient = getText(
+    formData,
+    "notes_visible_to_patient",
+  );
 
   if (!UUID_PATTERN.test(sessionId)) {
     return {
@@ -588,9 +712,7 @@ export async function updatePatientSessionAction(
     );
 
   if (
-    Number.isNaN(
-      startsAt.getTime(),
-    )
+    Number.isNaN(startsAt.getTime())
   ) {
     return {
       status: "error",
@@ -612,16 +734,22 @@ export async function updatePatientSessionAction(
     {
       target_session_id:
         sessionId,
+
       new_title:
         title,
+
       new_starts_at:
         startsAt.toISOString(),
+
       new_ends_at:
         endsAt.toISOString(),
+
       new_status:
         status,
+
       new_notes_internal:
         notesInternal,
+
       new_notes_visible_to_patient:
         notesVisibleToPatient,
     },
@@ -640,7 +768,11 @@ export async function updatePatientSessionAction(
     };
   }
 
-  if (!data || data.length === 0) {
+  if (
+    !data ||
+    (Array.isArray(data) &&
+      data.length === 0)
+  ) {
     return {
       status: "error",
       message:
@@ -649,12 +781,14 @@ export async function updatePatientSessionAction(
   }
 
   const updatedSession =
-    data[0] as {
-      patient_id?: string;
-    };
+    (Array.isArray(data)
+      ? data[0]
+      : data) as {
+        patient_id?: string;
+      };
 
   if (
-    updatedSession.patient_id &&
+    updatedSession?.patient_id &&
     UUID_PATTERN.test(
       updatedSession.patient_id,
     )
@@ -675,6 +809,6 @@ export async function updatePatientSessionAction(
   return {
     status: "success",
     message:
-      "Sesión actualizada correctamente.",
+      "Sesión actualizada correctamente en TuPsico. Si tiene un evento de Google Calendar asociado, sus cambios todavía no se sincronizan con Google.",
   };
 }
